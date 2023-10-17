@@ -21,8 +21,9 @@ export class HomeComponent implements OnInit {
   configLoading: boolean = false;
   token: String = "";
 
-  numOfQuestions: number = 10;
-  numOfOptionsPerQuestion: number = 4;
+  numOfQuestions: number = 5;
+  numOfOptionsPerQuestion: number = 2;
+  numOfSongsPerQuestion: number = 1;
 
   ngOnInit(): void {
     this.authLoading = true;
@@ -143,7 +144,7 @@ export class HomeComponent implements OnInit {
       const wrongArtists = artistTracks
         .filter(artist => artist.name !== correctArtist.name)
         .sort(() => 0.5 - Math.random())
-        .slice(0, 3);
+        .slice(0, this.numOfOptionsPerQuestion - 1);
     
         const options = [
           ...wrongArtists.map(artist => artist.name),
@@ -154,7 +155,7 @@ export class HomeComponent implements OnInit {
           text: `Who is the artist of this track?`,
           options,
           correctAnswer: correctArtist.name,
-          preview: correctArtist.preview.slice(0, this.numOfOptionsPerQuestion)
+          preview: correctArtist.preview.slice(0, this.numOfSongsPerQuestion)
       });
     }
     console.log(questions);
