@@ -144,7 +144,7 @@ export class HomeComponent implements OnInit {
 
   fetchTracksFromArtists = async () => {
     const artistTracks: ArtistData[] = []
-    for (let artist of this.genreArtists.slice(0, this.numOfQuestions)) {
+    for (let artist of this.genreArtists) {
       const response = await fetchFromSpotify({
         token: this.token,
         endpoint: `artists/${artist.id}/top-tracks`,
@@ -162,12 +162,17 @@ export class HomeComponent implements OnInit {
           preview.push(track.preview_url)
         }
       }
-      const artistData = {
-        name: response.tracks[0].artists[0].name,
-        topTracks,
-        preview
+      if (preview.length >= this.numOfSongsPerQuestion) {
+        const artistData = {
+          name: response.tracks[0].artists[0].name,
+          topTracks,
+          preview
+        };
+        artistTracks.push(artistData);
       }
-      artistTracks.push(artistData)
+      if (artistTracks.length >= this.numOfQuestions) {
+        break;
+      }
     }
     return artistTracks
   }
@@ -180,21 +185,16 @@ export class HomeComponent implements OnInit {
     for (let artistData of artistTracks) {
       const correctArtist = artistData;
 
-      // TODO: refactor shuffle
       const wrongArtists = this.genreArtists
-        .filter(artist => {
-          if (artist.name !== correctArtist.name && !usedArtist.has(artist.id)) {
-            usedArtist.add(artist.id);
-            return true;
-          }
-          return false;
-        })
+        .filter(artist => artist.name !== correctArtist.name && !usedArtist.has(artist.id))
         .sort(() => 0.5 - Math.random())
-        .slice(0, this.numOfOptionsPerQuestion - 1);
-
+        .slice(0, this.numOfOptionsPerQuestion - 1)
+      
+      wrongArtists.forEach(artist => usedArtist.add(artist.id));
+  
       const options = [
-        ...wrongArtists.map(artist => artist.name),
-        correctArtist.name
+          ...wrongArtists.map(artist => artist.name),
+          correctArtist.name
       ].sort(() => 0.5 - Math.random());
 
       questions.push({
@@ -204,7 +204,7 @@ export class HomeComponent implements OnInit {
         preview: correctArtist.preview.slice(0, this.numOfSongsPerQuestion)
       });
     }
-    console.log(questions);
+    console.log("questions", questions);
     // I added this below in order to pass questions to Game
     const navigationExtras: NavigationExtras = { state: { questions: questions } };
     this.router.navigate(['/game'], navigationExtras);
