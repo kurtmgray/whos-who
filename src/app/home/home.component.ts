@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter } from "@angular/core";
+import { Component, OnInit, Output } from "@angular/core";
 import fetchFromSpotify, { request } from "../../services/api";
 import { environment } from "src/environments/environment";
 import { Router, NavigationExtras } from "@angular/router";
@@ -8,6 +8,25 @@ const TOKEN_KEY = "whos-who-access-token";
 const CLIENT_ID = environment['SPOTIFY_CLIENT_ID'];
 const CLIENT_SECRET = environment['SPOTIFY_CLIENT_SECRET'];
 
+
+type Artist = {
+  name: string,
+  id: string
+}
+
+type ArtistData = {
+  name: any;
+  topTracks: any;
+  preview: any;
+}
+
+type Question = {
+  text: string;
+  options: string[];
+  correctAnswer: string;
+  preview: string[];
+}
+
 @Component({
   selector: "app-home",
   templateUrl: "./home.component.html",
@@ -16,17 +35,19 @@ const CLIENT_SECRET = environment['SPOTIFY_CLIENT_SECRET'];
 export class HomeComponent implements OnInit {
   constructor(private router: Router) {}
 
-  genres: String[] = ["House", "Alternative", "J-Rock", "R&B"];
-  selectedGenre: String = "";
+  @Output() questions: Question[] = [];
+
+  genres: string[] = ["House", "Alternative", "J-Rock", "R&B"];
+  selectedGenre: string = "";
   authLoading: boolean = false;
   configLoading: boolean = false;
-  token: String = "";
+  token: string = "";
 
   numOfQuestions: number = 5;
   numOfOptionsPerQuestion: number = 2;
   numOfSongsPerQuestion: number = 1;
 
-  @Output() questionsReady: EventEmitter<any[]> = new EventEmitter(); 
+  genreArtists: Artist[] = []; 
 
   ngOnInit(): void {
     this.authLoading = true;
@@ -61,7 +82,7 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  loadGenres = async (t: any) => {
+  loadGenres = async (t: string) => {
     this.configLoading = true;
     const response = await fetchFromSpotify({
       token: t,
@@ -72,10 +93,10 @@ export class HomeComponent implements OnInit {
     this.configLoading = false;
   };
 
-  setGenre(selectedGenre: any) {
+  setGenre = async (selectedGenre: string) => {
     this.selectedGenre = selectedGenre;
-    console.log(this.selectedGenre);
-    console.log(TOKEN_KEY);
+    const playlistIds = await this.fetchPlaylistsByGenre()
+    this.genreArtists = await this.fetchArtistsFromPlaylist(playlistIds)
   }
 
   fetchPlaylistsByGenre = async () => {
@@ -88,45 +109,63 @@ export class HomeComponent implements OnInit {
         limit: 1,
       },
     });
-    return response.playlists.items.map((item: {id: String}) => item.id);    
+    return response.playlists.items.map((item: {id: string}) => item.id);    
   }
 
-  fetchArtistsFromPlaylist = async (playlistIds: String[]) => {
-    const artists: any[] = [];
+  fetchArtistsFromPlaylist = async (playlistIds: string[]) => {
+    const artists: Artist[] = [];
+    const artistIds = new Set<string>();
+
     for (let playlistId of playlistIds) {
       const response = await fetchFromSpotify({
         token: this.token,
         endpoint: `playlists/${playlistId}`,
         params: {
-          fields: "tracks.items.track.artists.id",
+          fields: "tracks.items.track.artists",
           limit: 1,
         },
       });
-      artists.push(...response.tracks.items.map((item: any) => item.track.artists[0].id))
+
+      // Prevent duplicates
+      for (const item of response.tracks.items) {
+        const artist = {
+          name: item.track.artists[0].name,
+          id: item.track.artists[0].id
+        };
+
+        if (!artistIds.has(artist.id)) {
+          artistIds.add(artist.id);
+          artists.push(artist);
+        }
+      }
     }
-    console.log(artists)
     return artists;
   }
   
-  fetchTracksFromArtists = async (artistIds: String[]) => {
-    const artistTracks = []
-    for (let artistId of artistIds.slice(0, this.numOfQuestions)) {
+  fetchTracksFromArtists = async () => {
+    const artistTracks: ArtistData[] = []
+    for (let artist of this.genreArtists.slice(0, this.numOfQuestions)) {
       const response = await fetchFromSpotify({
         token: this.token,
-        endpoint: `artists/${artistId}/top-tracks`,
+        endpoint: `artists/${artist.id}/top-tracks`,
         params: {
           limit: 3,
           market: 'US',
         },
       });
+
+      const topTracks: string[] = []
+      const preview: string[] = []
+      for (let track of response.tracks) {
+        if (track.id && track.preview_url) {
+          topTracks.push(track.id)
+          preview.push(track.preview_url)
+        }
+      }
       const artistData = {
         name: response.tracks[0].artists[0].name,
-        topTracks: response.tracks
-          .filter((track: any) => track.id && track.preview_url)
-          .map((track: any) => track.id),
-        preview: response.tracks
-          .filter((track: any) => track.id && track.preview_url)
-          .map((track: any) => track.preview_url)
+        topTracks,
+        preview
       }
       artistTracks.push(artistData)
     }
@@ -134,25 +173,29 @@ export class HomeComponent implements OnInit {
   }
 
   createQuestions = async () => { 
-    const playlistIds = await this.fetchPlaylistsByGenre()
-    const artistIds = await this.fetchArtistsFromPlaylist(playlistIds)
-    const artistTracks = await this.fetchTracksFromArtists(artistIds)
-    console.log(artistTracks)
+    const artistTracks = await this.fetchTracksFromArtists()
+    const usedArtist = new Set<string>();
+    const questions: Question[] = [];
     
-    const questions = [];
     for (let artistData of artistTracks) {
       const correctArtist = artistData;
       
-      // currently on a small number of artists, will pull from larger list later
-      const wrongArtists = artistTracks
-        .filter(artist => artist.name !== correctArtist.name)
+      // TODO: refactor shuffle
+      const wrongArtists = this.genreArtists
+        .filter(artist => {
+          if (artist.name !== correctArtist.name && !usedArtist.has(artist.id)) {
+            usedArtist.add(artist.id);
+            return true;
+          } 
+          return false;
+        })
         .sort(() => 0.5 - Math.random())
         .slice(0, this.numOfOptionsPerQuestion - 1);
     
-        const options = [
-          ...wrongArtists.map(artist => artist.name),
-          correctArtist.name
-        ].sort(() => 0.5 - Math.random());
+      const options = [
+        ...wrongArtists.map(artist => artist.name),
+        correctArtist.name
+      ].sort(() => 0.5 - Math.random());
 
       questions.push({
           text: `Who is the artist of this track?`,
@@ -169,8 +212,4 @@ export class HomeComponent implements OnInit {
        // 
     return questions;
   }
-
-
-
-
 }
