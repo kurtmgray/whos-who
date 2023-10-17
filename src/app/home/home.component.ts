@@ -1,6 +1,7 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, Output, EventEmitter } from "@angular/core";
 import fetchFromSpotify, { request } from "../../services/api";
 import { environment } from "src/environments/environment";
+import { Router, NavigationExtras } from "@angular/router";
 
 const AUTH_ENDPOINT = "https://accounts.spotify.com/api/token";
 const TOKEN_KEY = "whos-who-access-token";
@@ -13,7 +14,7 @@ const CLIENT_SECRET = environment['SPOTIFY_CLIENT_SECRET'];
   styleUrls: ["./home.component.css"],
 })
 export class HomeComponent implements OnInit {
-  constructor() {}
+  constructor(private router: Router) {}
 
   genres: String[] = ["House", "Alternative", "J-Rock", "R&B"];
   selectedGenre: String = "";
@@ -24,6 +25,8 @@ export class HomeComponent implements OnInit {
   numOfQuestions: number = 5;
   numOfOptionsPerQuestion: number = 2;
   numOfSongsPerQuestion: number = 1;
+
+  @Output() questionsReady: EventEmitter<any[]> = new EventEmitter(); 
 
   ngOnInit(): void {
     this.authLoading = true;
@@ -159,6 +162,11 @@ export class HomeComponent implements OnInit {
       });
     }
     console.log(questions);
+      //
+    const navigationExtras: NavigationExtras = { state: { questions: questions } };
+    this.router.navigate(['/game'], navigationExtras);
+    console.log('Attempting to navigate to /game with questions.');
+       // 
     return questions;
   }
 

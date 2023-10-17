@@ -1,7 +1,27 @@
 <header>
-    <h1>Welcome to the Artist Guessing game</h1>
-    <img src="image link" alt="Example img">
-</header>
-<hr> <!--temporary very basic header line example-->
+    <h1>Game Page</h1>
+  </header>
+  <hr>
+  
+  <div *ngIf="questions.length; else noQuestions">
+    <h2>{{ questions[currentQuestionIndex].text }}</h2>
+    
+    <div *ngFor="let option of questions[currentQuestionIndex].options">
+      <button (click)="selectAnswer(option)">{{ option }}</button>
+    </div>
+  
+    <!-- Display selected answer for debugging -->
+    <p>Selected answer: {{ selectedAnswer }}</p>
+    
+    <button (click)="previousQuestion()" [disabled]="currentQuestionIndex === 0">Previous</button>
+    <button (click)="nextQuestion()" [disabled]="currentQuestionIndex === questions.length - 1">Next</button>
+    <!-- Need to figure out what to do when submitting final question. -->
+  </div>
+  
+  <ng-template #noQuestions>
+    <p>No questions available.</p>
+  </ng-template>
 
-<p>game works!</p>
+  
+
+  
