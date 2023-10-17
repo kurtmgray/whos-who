@@ -1,6 +1,7 @@
 import { Component, OnInit, Output } from "@angular/core";
 import fetchFromSpotify, { request } from "../../services/api";
 import { environment } from "src/environments/environment";
+import { Router, NavigationExtras } from "@angular/router";
 
 const AUTH_ENDPOINT = "https://accounts.spotify.com/api/token";
 const TOKEN_KEY = "whos-who-access-token";
@@ -32,7 +33,7 @@ type Question = {
   styleUrls: ["./home.component.css"],
 })
 export class HomeComponent implements OnInit {
-  constructor() {}
+  constructor(private router: Router) { }
 
   @Output() questions: Question[] = [];
 
@@ -46,7 +47,7 @@ export class HomeComponent implements OnInit {
   numOfOptionsPerQuestion: number = 2;
   numOfSongsPerQuestion: number = 1;
 
-  genreArtists: Artist[] = []; 
+  genreArtists: Artist[] = [];
 
   ngOnInit(): void {
     this.authLoading = true;
@@ -69,7 +70,7 @@ export class HomeComponent implements OnInit {
       },
       body: `grant_type=client_credentials&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}`
     }
-      ).then(({ access_token, expires_in }) => {      
+    ).then(({ access_token, expires_in }) => {
       const newToken = {
         value: access_token,
         expiration: Date.now() + (expires_in - 20) * 1000,
@@ -108,7 +109,7 @@ export class HomeComponent implements OnInit {
         limit: 1,
       },
     });
-    return response.playlists.items.map((item: {id: string}) => item.id);    
+    return response.playlists.items.map((item: { id: string }) => item.id);
   }
 
   fetchArtistsFromPlaylist = async (playlistIds: string[]) => {
@@ -140,7 +141,7 @@ export class HomeComponent implements OnInit {
     }
     return artists;
   }
-  
+
   fetchTracksFromArtists = async () => {
     const artistTracks: ArtistData[] = []
     for (let artist of this.genreArtists.slice(0, this.numOfQuestions)) {
@@ -171,39 +172,43 @@ export class HomeComponent implements OnInit {
     return artistTracks
   }
 
-  createQuestions = async () => { 
+  createQuestions = async () => {
     const artistTracks = await this.fetchTracksFromArtists()
     const usedArtist = new Set<string>();
     const questions: Question[] = [];
-    
+
     for (let artistData of artistTracks) {
       const correctArtist = artistData;
-      
+
       // TODO: refactor shuffle
       const wrongArtists = this.genreArtists
         .filter(artist => {
           if (artist.name !== correctArtist.name && !usedArtist.has(artist.id)) {
             usedArtist.add(artist.id);
             return true;
-          } 
+          }
           return false;
         })
         .sort(() => 0.5 - Math.random())
         .slice(0, this.numOfOptionsPerQuestion - 1);
-    
+
       const options = [
         ...wrongArtists.map(artist => artist.name),
         correctArtist.name
       ].sort(() => 0.5 - Math.random());
 
       questions.push({
-          text: `Who is the artist of this track?`,
-          options,
-          correctAnswer: correctArtist.name,
-          preview: correctArtist.preview.slice(0, this.numOfSongsPerQuestion)
+        text: `Who is the artist of this track?`,
+        options,
+        correctAnswer: correctArtist.name,
+        preview: correctArtist.preview.slice(0, this.numOfSongsPerQuestion)
       });
     }
     console.log(questions);
+    // I added this below in order to pass questions to Game
+    const navigationExtras: NavigationExtras = { state: { questions: questions } };
+    this.router.navigate(['/game'], navigationExtras);
+
     return questions;
   }
 }

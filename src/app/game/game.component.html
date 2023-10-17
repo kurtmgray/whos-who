@@ -1,0 +1,36 @@
+<header>
+    <h1>Game Page</h1>
+    <a routerLink="/">Home</a>
+</header>
+<hr>
+
+<div *ngIf="questions.length; else noQuestions">
+    <div class="score">Score: {{ score }}</div>
+    <h2>{{ questions[currentQuestionIndex].text }}</h2>
+    <audio controls [src]="questions[currentQuestionIndex]?.preview[0]">
+        Your browser does not support the audio tag.
+    </audio>
+    <div *ngFor="let option of questions[currentQuestionIndex].options">
+        <button (click)="selectAnswer(option)">{{ option }}</button>
+    </div>
+
+    <p>Selected answer: {{ selectedAnswer }}</p>
+
+    <div *ngIf="isAnswerSubmitted">
+        <span *ngIf="isAnswerCorrect" class="correct-feedback">Correct!</span>
+        <span *ngIf="!isAnswerCorrect" class="incorrect-feedback">Incorrect!</span>
+    </div>
+
+    <button (click)="submitAnswer()" [disabled]="isAnswerSubmitted">Submit Answer</button>
+    
+    <button 
+      (click)="currentQuestionIndex < questions.length - 1 ? nextQuestion() : finishQuiz()" 
+      [disabled]="!isAnswerSubmitted">
+        {{ currentQuestionIndex < questions.length - 1 ? 'Next' : 'Finish Quiz' }}
+    </button>
+    
+</div>
+
+<ng-template #noQuestions>
+    <p>No questions available.</p>
+</ng-template>
