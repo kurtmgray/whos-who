@@ -7,4 +7,8 @@
       {{ genre }}
     </option>
   </select>
+  <br />
+  <button *ngIf="selectedGenre != ''" (click)="createQuestions()">Get Playlists</button>
+  
+
 </div>
