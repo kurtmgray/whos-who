@@ -3,7 +3,9 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,  
+  SPOTIFY_CLIENT_ID: "",
+  SPOTIFY_CLIENT_SECRET: ""
 };
 
 /*
