@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, NavigationExtras } from '@angular/router';
+import { Results } from '../results/results.component';
 
 @Component({
   selector: 'app-game',
@@ -20,25 +21,47 @@ export class GameComponent implements OnInit {
   currentQuestionIndex = 0;
   selectedAnswer?: string;
   score: number = 0;
-
+  incorrectGuesses: number = 0;
+  maxWrongAllowed: number = 0;
   gameFinished: boolean = false;
-
-  ngOnInit(): void {
-    this.score = 0; // reset the score for a new game.
-  }
-
   isAnswerSubmitted: boolean = false;
   isAnswerCorrect: boolean = false;
   answeredQuestions: Set<number> = new Set(); // track which questions have been answered.
+  gameOverMessage?: string;
+  results: Results | null = null;
+
+
+  ngOnInit(): void {
+    this.score = 0; // reset the score for a new game.
+    this.incorrectGuesses = 0; // reset incorrect guess counter upon new game ?
+  }
+
+
 
   submitAnswer() {
     if (!this.isAnswerSubmitted) {
       this.isAnswerCorrect = this.selectedAnswer === this.questions[this.currentQuestionIndex].correctAnswer;
-
+  
       if (this.isAnswerCorrect) {
         this.score++;
+      } else if (!this.isAnswerCorrect) {
+        this.incorrectGuesses++;
+  
+        // Check here if the maximum incorrect threshold has been reached
+        if (this.maxIncorrectReached()) {
+          this.gameFinished = true; // Marking the game as finished
+          this.gameOverMessage = "You got too many wrong!";
+          this.results = {
+            score: this.score,
+            total: this.questions.length, // total questions in the quiz
+            gameOverMessage: this.gameOverMessage,
+            questionReached: this.currentQuestionIndex + 1
+          };
+          this.finishQuiz(); // If you want to finish the quiz when the threshold is reached.
+          return; // This will exit the function early and the remaining logic won't execute.
+        }
       }
-
+  
       this.isAnswerSubmitted = true;
     }
   }
@@ -65,11 +88,22 @@ export class GameComponent implements OnInit {
     }
   }
 
+  maxIncorrectReached(): boolean {
+    return this.incorrectGuesses >= (this.questions.length / 2)
+  }
+
   finishQuiz() {
     // Logic to handle end of quiz. navigate back to home for now until Results is available.
     // const navigationExtras: NavigationExtras = { state: { results: {score: this.score, total: this.questions.length} } };
     // this.router.navigate(['/results'], navigationExtras);
+    
     this.gameFinished = true;
+    if(!this.results) { // If results isn't set, set it now
+      this.results = {
+        score: this.score,
+        total: this.questions.length
+      };
+    }
   }
 
   handleResultsClosed() {

@@ -6,6 +6,9 @@
 
 <div *ngIf="questions.length; else noQuestions">
     <div class="score">Score: {{ score }}</div>
+    <div class="guesses-wrong: ">Incorrect guesses: {{ incorrectGuesses }}  / {{ maxWrongAllowed }}</div>
+    
+
     <h2>{{ questions[currentQuestionIndex].text }}</h2>
     <audio controls [src]="questions[currentQuestionIndex]?.preview[0]">
         Your browser does not support the audio tag.
@@ -34,9 +37,10 @@
 
 <app-results
     *ngIf="gameFinished" 
-    [results]="{score: score, total: questions.length}"
+    [results]="results"
     (closeResults)="handleResultsClosed()">
 </app-results>
+
 
 <ng-template #noQuestions>
     <p>No questions available.</p>

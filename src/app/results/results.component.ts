@@ -1,9 +1,11 @@
 import { Component, OnInit, Output, Input, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 
-type Results = {
+export type Results = {
   score: number,
-  total: number
+  total: number,
+  gameOverMessage?: string, // to store the "You got too many wrong" message
+  questionReached?: number; // to change 2nd number in the results message based on what Q # they reached.
 }
 
 @Component({
