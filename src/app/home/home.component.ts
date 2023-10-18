@@ -7,6 +7,10 @@ const AUTH_ENDPOINT = "https://accounts.spotify.com/api/token";
 const TOKEN_KEY = "whos-who-access-token";
 const CLIENT_ID = environment['SPOTIFY_CLIENT_ID'];
 const CLIENT_SECRET = environment['SPOTIFY_CLIENT_SECRET'];
+const DEFAULT_SELECTED_GENRE = null;
+const DEFAULT_NUM_OF_QUESTIONS = 5;
+const DEFAULT_NUM_OF_OPTIONS_PER_QUESTION = 2;
+const DEFAULT_NUM_OF_SONGS_PER_QUESTION = 1;
 
 
 type Artist = {
@@ -38,19 +42,22 @@ export class HomeComponent implements OnInit {
   @Output() questions: Question[] = [];
 
   genres: string[] = ["House", "Alternative", "J-Rock", "R&B"];
-  selectedGenre: string = "";
+  selectedGenre: string | null = DEFAULT_SELECTED_GENRE;
   authLoading: boolean = false;
   configLoading: boolean = false;
   token: string = "";
 
-  numOfQuestions: number = 5;
-  numOfOptionsPerQuestion: number = 2;
-  numOfSongsPerQuestion: number = 1;
+  numOfQuestions: number = DEFAULT_NUM_OF_QUESTIONS;
+  numOfOptionsPerQuestion: number = DEFAULT_NUM_OF_OPTIONS_PER_QUESTION
+  numOfSongsPerQuestion: number = DEFAULT_NUM_OF_SONGS_PER_QUESTION;
 
   genreArtists: Artist[] = [];
 
   ngOnInit(): void {
     this.authLoading = true;
+    
+    this.loadSavedConfig()
+    
     const storedTokenString = localStorage.getItem(TOKEN_KEY);
     if (storedTokenString) {
       const storedToken = JSON.parse(storedTokenString);
@@ -62,7 +69,6 @@ export class HomeComponent implements OnInit {
         return;
       }
     }
-    console.log("Sending request to AWS endpoint");
     request(AUTH_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -80,6 +86,8 @@ export class HomeComponent implements OnInit {
       this.token = newToken.value;
       this.loadGenres(newToken.value);
     });
+
+    
   }
 
   loadGenres = async (t: string) => {
@@ -106,7 +114,7 @@ export class HomeComponent implements OnInit {
       params: {
         q: this.selectedGenre,
         type: "playlist",
-        limit: 1,
+        limit: 3,
       },
     });
     return response.playlists.items.map((item: { id: string }) => item.id);
@@ -139,7 +147,7 @@ export class HomeComponent implements OnInit {
         }
       }
     }
-    return artists;
+    return artists.sort(() => 0.5 - Math.random());
   }
 
   fetchTracksFromArtists = async () => {
@@ -204,11 +212,40 @@ export class HomeComponent implements OnInit {
         preview: correctArtist.preview.slice(0, this.numOfSongsPerQuestion)
       });
     }
-    console.log("questions", questions);
-    // I added this below in order to pass questions to Game
+
     const navigationExtras: NavigationExtras = { state: { questions: questions } };
     this.router.navigate(['/game'], navigationExtras);
 
     return questions;
+  }
+
+  saveConfigToLocalStorage = () => {
+    const config = {
+      selectedGenre: this.selectedGenre,
+      numOfQuestions: this.numOfQuestions,
+      numOfOptionsPerQuestion: this.numOfOptionsPerQuestion,
+      numOfSongsPerQuestion: this.numOfSongsPerQuestion,
+    };
+    localStorage.setItem("config", JSON.stringify(config));
+    console.log("Config saved to local storage");
+  }
+
+  resetToDefaultConfig = () => {
+    this.selectedGenre = DEFAULT_SELECTED_GENRE;
+    this.numOfQuestions = DEFAULT_NUM_OF_QUESTIONS;
+    this.numOfOptionsPerQuestion = DEFAULT_NUM_OF_OPTIONS_PER_QUESTION;
+    this.numOfSongsPerQuestion = DEFAULT_NUM_OF_SONGS_PER_QUESTION;
+  }
+
+  loadSavedConfig = () => {
+    const storedConfig = localStorage.getItem("config");
+    if (storedConfig) {
+      console.log("Config found in localstorage");
+      const config = JSON.parse(storedConfig);
+      this.selectedGenre = config.selectedGenre;
+      this.numOfQuestions = config.numOfQuestions;
+      this.numOfOptionsPerQuestion = config.numOfOptionsPerQuestion;
+      this.numOfSongsPerQuestion = config.numOfSongsPerQuestion;
+    }
   }
 }

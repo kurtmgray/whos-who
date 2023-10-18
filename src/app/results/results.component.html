@@ -1,0 +1,12 @@
+<div class="results-backdrop">
+    <div class="results-container" *ngIf="results">
+        <button (click)="close()" class="close-button">Close</button>
+    
+        <div class="score-circle">
+            <span class="score">{{results.score}}</span>
+            <span class="divider">/</span>
+            <span class="total">{{results.total}}</span>
+        </div>
+        <p class="score-text">You scored {{results.score}} out of {{results.total}}!</p>
+    </div>
+</div>

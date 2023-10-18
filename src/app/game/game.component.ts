@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, NavigationExtras } from '@angular/router';
 
 @Component({
   selector: 'app-game',
@@ -20,6 +20,8 @@ export class GameComponent implements OnInit {
   currentQuestionIndex = 0;
   selectedAnswer?: string;
   score: number = 0;
+
+  gameFinished: boolean = false;
 
   ngOnInit(): void {
     this.score = 0; // reset the score for a new game.
@@ -65,7 +67,13 @@ export class GameComponent implements OnInit {
 
   finishQuiz() {
     // Logic to handle end of quiz. navigate back to home for now until Results is available.
-    this.router.navigate(['/']);
+    // const navigationExtras: NavigationExtras = { state: { results: {score: this.score, total: this.questions.length} } };
+    // this.router.navigate(['/results'], navigationExtras);
+    this.gameFinished = true;
+  }
+
+  handleResultsClosed() {
+    this.gameFinished = false;
   }
 }
 

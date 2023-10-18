@@ -1,6 +1,15 @@
-div {
+.settings-container {
+    display: flex;
+    flex-direction: column ;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+
+}
+
+.settings {
     font-family: 'Arial', sans-serif;
-    max-width: 500px;
+    width: 500px;
     margin: 40px auto;
     padding: 20px;
     border-radius: 8px;
@@ -9,7 +18,7 @@ div {
 }
   
 
-div[ngIf="authLoading || configLoading"] {
+.loading {
     text-align: center;
     font-weight: bold;
     padding: 20px;
@@ -55,9 +64,15 @@ button:disabled {
     cursor: not-allowed;
 }
 
+.settings-buttons {
+    display: flex;
+    gap: 12px;
+}
+
 @media (max-width: 480px) {
-    div {
-        margin: 10px;
+    .settings {
+        width: calc(100% - 20px); 
+        margin: 10px auto;
         padding: 15px;
     }
   
@@ -66,7 +81,7 @@ button:disabled {
     }
   
     select {
-        font-size: 14px;
+        font-size: 18px;
         padding: 8px 12px;
     }
   

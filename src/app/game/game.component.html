@@ -29,7 +29,14 @@
         {{ currentQuestionIndex < questions.length - 1 ? 'Next' : 'Finish Quiz' }}
     </button>
     
+    
 </div>
+
+<app-results
+    *ngIf="gameFinished" 
+    [results]="{score: score, total: questions.length}"
+    (closeResults)="handleResultsClosed()">
+</app-results>
 
 <ng-template #noQuestions>
     <p>No questions available.</p>

@@ -1,43 +1,53 @@
-<div *ngIf="authLoading || configLoading">Loading...</div>
-<div *ngIf="!authLoading && !configLoading">
-  <h1>Settings</h1>
-  Genre:
-  <select [(ngModel)]="selectedGenre" (ngModelChange)="setGenre($event)">
-    <option [value]=""></option>
-    <option [value]="genre" *ngFor="let genre of genres">
-      {{ genre }}
-    </option>
-  </select>
-  <br />
-  Number of Questions:
-  <select [(ngModel)]="numOfQuestions">
-    <option value="1">1</option>
-    <option value="2">2</option>
-    <option value="3">3</option>
-    <option value="4">4</option>
-    <option value="5">5</option>
-    <option value="6">6</option>
-    <option value="7">7</option>
-    <option value="8">8</option>
-    <option value="9">9</option>
-    <option value="10">10</option>
-  </select>
-  <br />
-  Number of Songs per Question:
-  <select [(ngModel)]="numOfSongsPerQuestion">
-    <option value="1">1</option>
-    <option value="2">2</option>
-    <option value="3">3</option>
-  </select>
-  <br />
-  Number of Options per Question:
-  <select [(ngModel)]="numOfOptionsPerQuestion">
-    <option value="2">2</option>
-    <option value="3">3</option>
-    <option value="4">4</option>
-  </select>
-  <br />
-  <button [disabled]="selectedGenre === ''" (click)="createQuestions()">Generate Questions</button>
-  
+<div *ngIf="authLoading || configLoading" class="loading">Loading...</div>
+<div class="settings-container">
 
+  <div *ngIf="!authLoading && !configLoading" class="settings">
+    <h1>Settings</h1>
+    Genre:
+    <select [(ngModel)]="selectedGenre" (ngModelChange)="setGenre($event)">
+      <option [value]="null" disabled>select a genre</option>
+      <option [value]="genre" *ngFor="let genre of genres">
+        {{ genre | titlecase }}
+      </option>
+    </select>
+    <br />
+    Number of Questions:
+    <select [(ngModel)]="numOfQuestions">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+    </select>
+    <br />
+    Number of Songs per Question:
+    <select [(ngModel)]="numOfSongsPerQuestion">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+    </select>
+    <br />
+    Number of Options per Question:
+    <select [(ngModel)]="numOfOptionsPerQuestion">
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+    </select>
+    <br />
+    <div class="settings-buttons">
+      <button (click)="resetToDefaultConfig()">Load Default</button>
+      <button (click)="loadSavedConfig()">Load Saved</button>
+      <button (click)="saveConfigToLocalStorage()">Save</button>
+    </div>
+    
+    <button [disabled]="selectedGenre === null" (click)="createQuestions()">Start Game</button>
+    
+  
+  
+  </div>
 </div>
