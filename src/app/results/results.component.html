@@ -1,7 +1,8 @@
 <div class="results-backdrop">
     <div class="results-container" *ngIf="results">
       <button (click)="close()" class="close-button">Close</button>
-      
+      <button (click)="playAgain()">Play Again!</button>
+
       <ng-container *ngIf="!results.gameOverMessage; else gameOverTemplate">
         <div class="score-circle">
           <span class="score">{{results.score}}</span>

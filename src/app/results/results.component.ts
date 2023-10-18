@@ -15,7 +15,7 @@ export type Results = {
 })
 export class ResultsComponent implements OnInit {
 
-  constructor() {}
+  constructor(private router: Router) {}
   // constructor(private router: Router) {
   //   const navigation = this.router.getCurrentNavigation();
   //   if (navigation && navigation.extras && navigation.extras.state) {
@@ -33,5 +33,11 @@ export class ResultsComponent implements OnInit {
 
   ngOnInit(): void {
   }
+
+  
+playAgain() {
+  // added a play again button to the results pop-up that routes to home. 
+  this.router.navigate(['/']);
+}
 
 }

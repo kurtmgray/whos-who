@@ -214,7 +214,9 @@ export class HomeComponent implements OnInit {
       });
     }
   
-    const navigationExtras: NavigationExtras = { state: { questions: questions } };
+    const navigationExtras: NavigationExtras = 
+    { state: { questions: questions, numberOfSamples: this.numOfSongsPerQuestion } };
+    
     this.router.navigate(['/game'], navigationExtras);
     console.log("Questions: ", questions);
     return questions;

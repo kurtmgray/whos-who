@@ -12,6 +12,7 @@ export class GameComponent implements OnInit {
     const navigation = this.router.getCurrentNavigation();
     if (navigation && navigation.extras && navigation.extras.state) {
       this.questions = navigation.extras.state['questions'];
+      this.numberOfSamples = navigation.extras.state['numberOfSamples']
       console.log("Received questions:", this.questions);
       console.log("Navigation object:", navigation);
     }
@@ -29,6 +30,8 @@ export class GameComponent implements OnInit {
   answeredQuestions: Set<number> = new Set(); // track which questions have been answered.
   gameOverMessage?: string;
   results: Results | null = null;
+  numberOfSamples: number = 3;
+  
 
 
   ngOnInit(): void {
@@ -96,7 +99,7 @@ export class GameComponent implements OnInit {
     // Logic to handle end of quiz. navigate back to home for now until Results is available.
     // const navigationExtras: NavigationExtras = { state: { results: {score: this.score, total: this.questions.length} } };
     // this.router.navigate(['/results'], navigationExtras);
-    
+
     this.gameFinished = true;
     if(!this.results) { // If results isn't set, set it now
       this.results = {
