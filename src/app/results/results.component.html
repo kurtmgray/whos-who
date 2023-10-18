@@ -1,12 +1,22 @@
 <div class="results-backdrop">
     <div class="results-container" *ngIf="results">
-        <button (click)="close()" class="close-button">Close</button>
-    
+      <button (click)="close()" class="close-button">Close</button>
+      <button (click)="playAgain()">Play Again!</button>
+
+      <ng-container *ngIf="!results.gameOverMessage; else gameOverTemplate">
         <div class="score-circle">
-            <span class="score">{{results.score}}</span>
-            <span class="divider">/</span>
-            <span class="total">{{results.total}}</span>
+          <span class="score">{{results.score}}</span>
+          <span class="divider">/</span>
+          <span class="total">{{results.total}}</span>
         </div>
         <p class="score-text">You scored {{results.score}} out of {{results.total}}!</p>
+      </ng-container>
+      
+      <ng-template #gameOverTemplate>
+        <p>{{ results.gameOverMessage }}</p>
+        <p>You scored {{ results.score }} out of {{ results.questionReached }}! Better luck next time!</p>
+      </ng-template>
+  
     </div>
-</div>
+  </div>
+  

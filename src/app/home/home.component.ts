@@ -210,12 +210,15 @@ export class HomeComponent implements OnInit {
         options,
         correctAnswer: correctArtist.name,
         preview: correctArtist.preview.slice(0, this.numOfSongsPerQuestion)
+        
       });
     }
-
-    const navigationExtras: NavigationExtras = { state: { questions: questions } };
+  
+    const navigationExtras: NavigationExtras = 
+    { state: { questions: questions, numberOfSamples: this.numOfSongsPerQuestion } };
+    
     this.router.navigate(['/game'], navigationExtras);
-
+    console.log("Questions: ", questions);
     return questions;
   }
 

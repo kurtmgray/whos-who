@@ -5,11 +5,19 @@
 <hr>
 
 <div *ngIf="questions.length; else noQuestions">
-    <div class="score">Score: {{ score }}</div>
+    <div class="questionNumber">Question {{ currentQuestionIndex + 1 }} of {{ questions.length }}</div>
+    <div class="score">Score: {{ score }} </div>
+    <div class="guesses-wrong: ">Incorrect guesses: {{ incorrectGuesses }} / {{ questions.length / 2 }}</div>
+
+
     <h2>{{ questions[currentQuestionIndex].text }}</h2>
-    <audio controls [src]="questions[currentQuestionIndex]?.preview[0]">
-        Your browser does not support the audio tag.
-    </audio>
+
+    <ng-container *ngFor="let sample of questions[currentQuestionIndex]?.preview | slice:0:numberOfSamples">
+        <audio controls [src]="sample">
+            Your browser does not support the audio tag.
+        </audio>
+    </ng-container>
+
     <div *ngFor="let option of questions[currentQuestionIndex].options">
         <button (click)="selectAnswer(option)">{{ option }}</button>
     </div>
@@ -22,21 +30,17 @@
     </div>
 
     <button (click)="submitAnswer()" [disabled]="isAnswerSubmitted">Submit Answer</button>
-    
-    <button 
-      (click)="currentQuestionIndex < questions.length - 1 ? nextQuestion() : finishQuiz()" 
-      [disabled]="!isAnswerSubmitted">
-        {{ currentQuestionIndex < questions.length - 1 ? 'Next' : 'Finish Quiz' }}
-    </button>
-    
-    
+
+    <button (click)="currentQuestionIndex < questions.length - 1 ? nextQuestion() : finishQuiz()"
+        [disabled]="!isAnswerSubmitted">
+        {{ currentQuestionIndex < questions.length - 1 ? 'Next' : 'Finish Quiz' }} </button>
+
+
 </div>
 
-<app-results
-    *ngIf="gameFinished" 
-    [results]="{score: score, total: questions.length}"
-    (closeResults)="handleResultsClosed()">
+<app-results *ngIf="gameFinished" [results]="results" (closeResults)="handleResultsClosed()">
 </app-results>
+
 
 <ng-template #noQuestions>
     <p>No questions available.</p>
