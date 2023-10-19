@@ -4,7 +4,7 @@
 </header>
 <hr>
 
-<div *ngIf="questions.length; else noQuestions">
+<div *ngIf="questions.length">
     <div class="questionNumber">Question {{ currentQuestionIndex + 1 }} of {{ questions.length }}</div>
     <div class="score">Score: {{ score }} </div>
     <div class="guesses-wrong: ">Incorrect guesses: {{ incorrectGuesses }} / {{ questions.length / 2 }}</div>
@@ -13,13 +13,15 @@
     <h2>{{ questions[currentQuestionIndex].text }}</h2>
 
     <ng-container *ngFor="let sample of questions[currentQuestionIndex]?.preview | slice:0:numberOfSamples">
-        <audio controls [src]="sample">
+        <audio #audioControls controls (play)="onPlay($event)">
+        <source [src]="sample" type="audio/mpeg">
             Your browser does not support the audio tag.
         </audio>
     </ng-container>
 
-    <div *ngFor="let option of questions[currentQuestionIndex].options">
-        <button (click)="selectAnswer(option)">{{ option }}</button>
+    <div *ngFor="let option of questions[currentQuestionIndex].options" class="option">
+        <img [src]="option.img" alt="picture of artist">
+        <button (click)="selectAnswer(option.name)"> {{ option.name }}</button>
     </div>
 
     <p>Selected answer: {{ selectedAnswer }}</p>
@@ -40,8 +42,3 @@
 
 <app-results *ngIf="gameFinished" [results]="results" (closeResults)="handleResultsClosed()">
 </app-results>
-
-
-<ng-template #noQuestions>
-    <p>No questions available.</p>
-</ng-template>

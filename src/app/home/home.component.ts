@@ -15,18 +15,23 @@ const DEFAULT_NUM_OF_SONGS_PER_QUESTION = 1;
 
 type Artist = {
   name: string,
-  id: string
+  id: string,
+  img: string
 }
 
-type ArtistData = {
-  name: any;
-  topTracks: any;
-  preview: any;
+interface ArtistData extends Option {
+  topTracks: string[],
+  preview: string[];
+}
+
+interface Option {
+  name: string;
+  img: string;
 }
 
 type Question = {
   text: string;
-  options: string[];
+  options: Option[];
   correctAnswer: string;
   preview: string[];
 }
@@ -46,6 +51,7 @@ export class HomeComponent implements OnInit {
   authLoading: boolean = false;
   configLoading: boolean = false;
   token: string = "";
+  errorMessage: string | null = null;
 
   numOfQuestions: number = DEFAULT_NUM_OF_QUESTIONS;
   numOfOptionsPerQuestion: number = DEFAULT_NUM_OF_OPTIONS_PER_QUESTION
@@ -102,9 +108,12 @@ export class HomeComponent implements OnInit {
   };
 
   setGenre = async (selectedGenre: string) => {
+    this.configLoading = true;
     this.selectedGenre = selectedGenre;
+    this.errorMessage = null;
     const playlistIds = await this.fetchPlaylistsByGenre()
     this.genreArtists = await this.fetchArtistsFromPlaylist(playlistIds)
+    this.configLoading = false;
   }
 
   fetchPlaylistsByGenre = async () => {
@@ -123,22 +132,24 @@ export class HomeComponent implements OnInit {
   fetchArtistsFromPlaylist = async (playlistIds: string[]) => {
     const artists: Artist[] = [];
     const artistIds = new Set<string>();
-
-    for (let playlistId of playlistIds) {
-      const response = await fetchFromSpotify({
-        token: this.token,
-        endpoint: `playlists/${playlistId}`,
-        params: {
-          fields: "tracks.items.track.artists",
-          limit: 1,
-        },
-      });
-
+    
+    const allResponses = await Promise.all(playlistIds.map(playlistId => 
+      fetchFromSpotify({
+          token: this.token,
+          endpoint: `playlists/${playlistId}`,
+          params: {
+              fields: "tracks.items.track",
+              limit: 1,
+          },
+      })
+  ));
+    for (let response of allResponses) {
       // Prevent duplicates
       for (const item of response.tracks.items) {
         const artist = {
           name: item.track.artists[0].name,
-          id: item.track.artists[0].id
+          id: item.track.artists[0].id,
+          img: item.track.album.artists[0].ima || null,
         };
 
         if (!artistIds.has(artist.id)) {
@@ -150,18 +161,32 @@ export class HomeComponent implements OnInit {
     return artists.sort(() => 0.5 - Math.random());
   }
 
+  fetchArtistImage = async (artistId: string) => {
+    const response = await fetchFromSpotify({
+      token: this.token,
+      endpoint: `artists/${artistId}`,
+      params: {
+        fields: "images",
+      },
+    });
+    return response.images[0].url;
+  }
+
   fetchTracksFromArtists = async () => {
     const artistTracks: ArtistData[] = []
-    for (let artist of this.genreArtists) {
-      const response = await fetchFromSpotify({
+    
+    const allResponses = await Promise.all(this.genreArtists.map(artist =>
+      fetchFromSpotify({
         token: this.token,
         endpoint: `artists/${artist.id}/top-tracks`,
         params: {
           limit: 3,
           market: 'US',
         },
-      });
-
+      })
+    ));
+    
+    for (let response of allResponses) {
       const topTracks: string[] = []
       const preview: string[] = []
       for (let track of response.tracks) {
@@ -171,8 +196,10 @@ export class HomeComponent implements OnInit {
         }
       }
       if (preview.length >= this.numOfSongsPerQuestion) {
+        // Set fallback image is album cover
         const artistData = {
           name: response.tracks[0].artists[0].name,
+          img: response.tracks[0].album.images[0].url || null,
           topTracks,
           preview
         };
@@ -182,44 +209,64 @@ export class HomeComponent implements OnInit {
         break;
       }
     }
+
     return artistTracks
   }
 
   createQuestions = async () => {
+    this.configLoading = true;
     const artistTracks = await this.fetchTracksFromArtists()
     const usedArtist = new Set<string>();
     const questions: Question[] = [];
-
+    
     for (let artistData of artistTracks) {
-      const correctArtist = artistData;
+      const correctArtistId = this.genreArtists.find(artist => artist.name === artistData.name)?.id;
+      const correctArtist = correctArtistId 
+        ? { 
+          ...artistData, 
+          img: await this.fetchArtistImage(correctArtistId) || artistData.img
+        }
+        : artistData;
 
       const wrongArtists = this.genreArtists
-        .filter(artist => artist.name !== correctArtist.name && !usedArtist.has(artist.id))
-        .sort(() => 0.5 - Math.random())
-        .slice(0, this.numOfOptionsPerQuestion - 1)
-      
-      wrongArtists.forEach(artist => usedArtist.add(artist.id));
-  
-      const options = [
-          ...wrongArtists.map(artist => artist.name),
-          correctArtist.name
-      ].sort(() => 0.5 - Math.random());
+          .filter(artist => artist.name !== correctArtist.name && !usedArtist.has(artist.id))
+          .sort(() => 0.5 - Math.random())
+          .slice(0, this.numOfOptionsPerQuestion - 1);
+
+      const wrongArtistImagesPromises = wrongArtists.map(artist => this.fetchArtistImage(artist.id));
+
+      const wrongArtistImages = await Promise.all(wrongArtistImagesPromises);
+
+      const options: Option[] = [
+          { 
+            name: correctArtist.name, 
+            img: correctArtist.img 
+          },
+          ...wrongArtists.map((artist, index) => {
+              return { name: artist.name, img: wrongArtistImages[index] };
+          })
+      ];
 
       questions.push({
-        text: `Who is the artist of this track?`,
-        options,
-        correctAnswer: correctArtist.name,
-        preview: correctArtist.preview.slice(0, this.numOfSongsPerQuestion)
-        
+          text: `Who is the artist of this track?`,
+          options,
+          correctAnswer: correctArtist.name,
+          preview: correctArtist.preview.slice(0, this.numOfSongsPerQuestion)
       });
-    }
+
+      wrongArtists.forEach(artist => usedArtist.add(artist.id));
+  }
   
     const navigationExtras: NavigationExtras = 
     { state: { questions: questions, numberOfSamples: this.numOfSongsPerQuestion } };
     
+    if (this.numOfQuestions > questions.length) {
+      this.errorMessage = "Not enough songs to create questions. Please select a different genre."
+      return
+    }
+
     this.router.navigate(['/game'], navigationExtras);
-    console.log("Questions: ", questions);
-    return questions;
+    this.configLoading = false;
   }
 
   saveConfigToLocalStorage = () => {

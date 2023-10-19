@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { Router, NavigationExtras } from '@angular/router';
+import { Component, OnInit, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { Results } from '../results/results.component';
 
 @Component({
@@ -17,7 +17,9 @@ export class GameComponent implements OnInit {
       console.log("Navigation object:", navigation);
     }
   }
+  @ViewChildren('audioControls') audioElements: QueryList<ElementRef<HTMLAudioElement>> | undefined;
 
+  
   questions: any[] = [];
   currentQuestionIndex = 0;
   selectedAnswer?: string;
@@ -35,11 +37,24 @@ export class GameComponent implements OnInit {
 
 
   ngOnInit(): void {
+    if (this.questions.length === 0) {
+      this.router.navigate(['/']); 
+    }
     this.score = 0; // reset the score for a new game.
     this.incorrectGuesses = 0; // reset incorrect guess counter upon new game ?
   }
 
-
+  onPlay(event: Event) {
+    // Pause all other audio elements
+    if (this.audioElements) {
+      this.audioElements.forEach(audioRef => {
+        const audio: HTMLAudioElement = audioRef.nativeElement;
+        if (audio !== event.target) {
+            audio.pause();
+        }
+      })
+    }
+  }
 
   submitAnswer() {
     if (!this.isAnswerSubmitted) {

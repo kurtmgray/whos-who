@@ -1,7 +1,7 @@
-<div *ngIf="authLoading || configLoading" class="loading">Loading...</div>
+<!-- <div *ngIf="authLoading || configLoading" class="loading">Loading...</div> -->
 <div class="settings-container">
 
-  <div *ngIf="!authLoading && !configLoading" class="settings">
+  <div *ngIf="!authLoading" class="settings">
     <h1>Settings</h1>
     Genre:
     <select [(ngModel)]="selectedGenre" (ngModelChange)="setGenre($event)">
@@ -45,9 +45,12 @@
       <button (click)="saveConfigToLocalStorage()">Save</button>
     </div>
     
-    <button [disabled]="selectedGenre === null" (click)="createQuestions()">Start Game</button>
+    <button [disabled]="selectedGenre === null || this.configLoading" (click)="createQuestions()">
+      <span *ngIf="!configLoading">Start Game</span>
+      <div *ngIf="configLoading" class="spinner"></div> 
+    </button>
     
-  
+    <div *ngIf="errorMessage" class="error">{{errorMessage}}</div>
   
   </div>
 </div>
