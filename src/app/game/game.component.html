@@ -1,13 +1,12 @@
-<header>
-    <h1>Game Page</h1>
-    <a routerLink="/">Home</a>
-</header>
+<a routerLink="/">Home</a>
 <hr>
 
 <div *ngIf="questions.length">
     <div class="questionNumber">Question {{ currentQuestionIndex + 1 }} of {{ questions.length }}</div>
     <div class="score">Score: {{ score }} </div>
-    <div class="guesses-wrong: ">Incorrect guesses: {{ incorrectGuesses }} / {{ questions.length / 2 }}</div>
+    <div class="guesses-wrong: ">Incorrect guesses: {{ incorrectGuesses }} / {{ getMaxIncorrectGuesses() }}</div>
+
+
 
 
     <h2>{{ questions[currentQuestionIndex].text }}</h2>

@@ -41,7 +41,7 @@ export class GameComponent implements OnInit {
       this.router.navigate(['/']); 
     }
     this.score = 0; // reset the score for a new game.
-    this.incorrectGuesses = 0; // reset incorrect guess counter upon new game ?
+    this.incorrectGuesses = 0; // reset incorrect guess counter upon new game.
   }
 
   onPlay(event: Event) {
@@ -106,8 +106,12 @@ export class GameComponent implements OnInit {
     }
   }
 
+  getMaxIncorrectGuesses(): number {
+    return Math.ceil(this.questions.length / 2);
+  }
+
   maxIncorrectReached(): boolean {
-    return this.incorrectGuesses >= (this.questions.length / 2)
+    return this.incorrectGuesses >= this.getMaxIncorrectGuesses();
   }
 
   finishQuiz() {
