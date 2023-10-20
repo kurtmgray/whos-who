@@ -111,8 +111,8 @@ export class HomeComponent implements OnInit {
     this.configLoading = true;
     this.selectedGenre = selectedGenre;
     this.errorMessage = null;
-    const playlistIds = await this.fetchPlaylistsByGenre()
-    this.genreArtists = await this.fetchArtistsFromPlaylist(playlistIds)
+    // const playlistIds = await this.fetchPlaylistsByGenre()
+    // this.genreArtists = await this.fetchArtistsFromPlaylist(playlistIds)
     this.configLoading = false;
   }
 
@@ -213,12 +213,19 @@ export class HomeComponent implements OnInit {
     return artistTracks
   }
 
+  // createQuestions = async () => {
+  //   this.configLoading = true;
+  //   const artistTracks = await this.fetchTracksFromArtists()
+  //   const usedArtist = new Set<string>();
+  //   const questions: Question[] = [];
+    
   createQuestions = async () => {
     this.configLoading = true;
+    const playlistIds = await this.fetchPlaylistsByGenre()
+    this.genreArtists = await this.fetchArtistsFromPlaylist(playlistIds)
     const artistTracks = await this.fetchTracksFromArtists()
     const usedArtist = new Set<string>();
     const questions: Question[] = [];
-    
     for (let artistData of artistTracks) {
       const correctArtistId = this.genreArtists.find(artist => artist.name === artistData.name)?.id;
       const correctArtist = correctArtistId 
