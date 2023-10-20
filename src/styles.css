@@ -1,1 +1,18 @@
 /* You can add global styles to this file, and also import other style files */
+
+:root {
+    --primary-color: #4c4e4b;
+    --secondary-color: #8acdaabd;
+    font-family: 'Poppins', sans-serif;
+    /* Add other variables as needed */
+  }
+
+body {
+    background-color: var(--primary-color);
+    overflow-y: auto;
+}
+
+button {
+    background-color: #4c4e4b;
+    font-family: var(--font-family);
+}

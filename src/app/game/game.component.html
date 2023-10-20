@@ -1,43 +1,64 @@
-<a routerLink="/">Home</a>
-<hr>
+<div class="game-container">
+    <div *ngIf="questions.length">
 
-<div *ngIf="questions.length">
-    <div class="questionNumber">Question {{ currentQuestionIndex + 1 }} of {{ questions.length }}</div>
-    <div class="score">Score: {{ score }} </div>
-    <div class="guesses-wrong: ">Incorrect guesses: {{ incorrectGuesses }} / {{ getMaxIncorrectGuesses() }}</div>
+        <div class="progress-container">
+
+            <div class="circle-progress question-progress" [ngStyle]="questionProgressStyle">
+                <div class="circle-inner">
+                    <span class="progress-number">{{ currentQuestionIndex + 1 }} / {{ questions.length }}</span>
+                </div>
+            </div>
+            <div class="score-display">Score: {{ score }}</div>
+            <div class="circle-progress incorrect-progress" [ngStyle]="incorrectProgressStyle">
+                <div class="circle-inner">
+                    <span class="progress-number">{{ incorrectGuesses }} / {{ getMaxIncorrectGuesses() }}</span>
+                </div>
+            </div>
+        </div>
 
 
+        <h2>{{ questions[currentQuestionIndex].text }}</h2>
+        
+        <div class="audio-container">
+            <!-- This ng-container will only handle the sample buttons -->
+            <ng-container *ngFor="let sample of questions[currentQuestionIndex]?.preview; let i = index">
+                <button class="sample-button" (click)="toggleAccordion(i)">Sample {{i+1}}</button>
+            </ng-container>
+        </div>
+        
+        <!-- Separate container for audio players -->
+        <div class="audio-players-container">
+            <ng-container *ngFor="let sample of questions[currentQuestionIndex]?.preview; let i = index">
+                <div *ngIf="i === activeSampleIndex" class="audio-wrapper">
+                    <audio #audioControls controls (play)="onPlay($event)">
+                        <source [src]="sample" type="audio/mpeg">
+                        Your browser does not support the audio tag.
+                    </audio>
+                </div>
+            </ng-container>
+        </div>
+        
+
+        <div *ngFor="let option of questions[currentQuestionIndex].options" class="option">
+            <img [src]="option.img" alt="picture of artist">
+            <button (click)="selectAnswer(option.name)"> {{ option.name }}</button>
+        </div>
+
+        <p>Selected answer: {{ selectedAnswer }}</p>
+
+        <div *ngIf="isAnswerSubmitted">
+            <span *ngIf="isAnswerCorrect" class="correct-feedback">Correct!</span>
+            <span *ngIf="!isAnswerCorrect" class="incorrect-feedback">Incorrect!</span>
+        </div>
+
+        <button (click)="submitAnswer()" [disabled]="isAnswerSubmitted">Submit Answer</button>
+
+        <button (click)="currentQuestionIndex < questions.length - 1 ? nextQuestion() : finishQuiz()"
+            [disabled]="!isAnswerSubmitted">
+            {{ currentQuestionIndex < questions.length - 1 ? 'Next' : 'Finish Quiz' }} </button>
 
 
-    <h2>{{ questions[currentQuestionIndex].text }}</h2>
-
-    <ng-container *ngFor="let sample of questions[currentQuestionIndex]?.preview | slice:0:numberOfSamples">
-        <audio #audioControls controls (play)="onPlay($event)">
-        <source [src]="sample" type="audio/mpeg">
-            Your browser does not support the audio tag.
-        </audio>
-    </ng-container>
-
-    <div *ngFor="let option of questions[currentQuestionIndex].options" class="option">
-        <img [src]="option.img" alt="picture of artist">
-        <button (click)="selectAnswer(option.name)"> {{ option.name }}</button>
     </div>
-
-    <p>Selected answer: {{ selectedAnswer }}</p>
-
-    <div *ngIf="isAnswerSubmitted">
-        <span *ngIf="isAnswerCorrect" class="correct-feedback">Correct!</span>
-        <span *ngIf="!isAnswerCorrect" class="incorrect-feedback">Incorrect!</span>
-    </div>
-
-    <button (click)="submitAnswer()" [disabled]="isAnswerSubmitted">Submit Answer</button>
-
-    <button (click)="currentQuestionIndex < questions.length - 1 ? nextQuestion() : finishQuiz()"
-        [disabled]="!isAnswerSubmitted">
-        {{ currentQuestionIndex < questions.length - 1 ? 'Next' : 'Finish Quiz' }} </button>
-
-
 </div>
-
 <app-results *ngIf="gameFinished" [results]="results" (closeResults)="handleResultsClosed()">
 </app-results>
