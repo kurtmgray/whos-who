@@ -1,11 +1,63 @@
-div {
+.game-container {
     font-family: 'Arial', sans-serif;
-    max-width: 500px;
+    max-width: 50vw;
     margin: 10px auto;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    background-color: #fff;
+    background-color: var(--secondary-color);
+}
+.sample-button {
+    font-size: 0.8em;
+    padding: 5px 10px;
+    margin-right: 10px;
+}
+.audio-container {
+    display: flex;
+    flex-direction: row; /* layout children (buttons) in a row */
+    justify-content: center; /* center the children horizontally */
+    flex-wrap: wrap; /* allows items to wrap to next line if there's not enough space */
+    gap: 10px; /* space between each child */
+}
+.audio-wrapper {
+    width: 100%; /* occupy the full width of the parent */
+    display: flex;
+    justify-content: center; /* center the audio player horizontally */
+    margin-top: 10px; /* some space above the audio player */
+}
+.progress-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.score-display {
+    color: #333;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.circle-progress {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: lightgrey;
+}
+
+.circle-inner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;
+    height: 80px;
+    background-color: white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .option {
@@ -15,59 +67,27 @@ div {
     gap: 10px;
 }
 
-.option button {
-    margin: 0px;
-}
-
-.game-over-message {
-    color: red;
-    font-weight: bold;
-    font-size: 1.5em;
-    margin: 20px 0;
+audio {
+    border-radius: 5px;
 }
 
 .correct-feedback {
     color: green;
-  }
-  
-  .incorrect-feedback {
-    color: red;
-  }
+}
 
-a {
-    text-align: center;
-    font-size:28px;
+.incorrect-feedback {
+    color: red;
 }
 
 img {
-    width: 50px;
-    height: 50px;   
-    margin: 0;
+    width: 85px;
+    height: 85px;
     border-radius: 4px;
-
 }
 
-div[ngIf="authLoading || configLoading"] {
-    text-align: center;
-    font-weight: bold;
-    padding: 20px;
-    font-size: 18px;
-    color: #666;
-}
-
-h1 {
+h1, h2 {
     text-align: center;
     color: #333;
-    margin-bottom: 20px;
-}
-
-select {
-    width: 100%;
-    padding: 10px 15px;
-    margin: 10px 0;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-size: 16px;
 }
 
 button {
@@ -75,7 +95,7 @@ button {
     width: 100%;
     padding: 10px 15px;
     margin-top: 20px;
-    background-color: #007BFF;
+    background-color: var(--primary-color);
     border: none;
     border-radius: 4px;
     color: white;
@@ -85,7 +105,7 @@ button {
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #666;
 }
 
 button:disabled {
@@ -94,22 +114,18 @@ button:disabled {
 }
 
 @media (max-width: 480px) {
-    div {
-        margin: 10px;
+    .game-container {
+        width: 90%;
+        margin: 10px auto;
         padding: 15px;
     }
-  
+
     h1 {
         font-size: 20px;
     }
-  
-    select {
-        font-size: 14px;
-        padding: 8px 12px;
-    }
-  
+
     button {
         padding: 8px 12px;
         font-size: 16px;
     }
-  }
+}
