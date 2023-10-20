@@ -18,14 +18,18 @@
 
 
         <h2>{{ questions[currentQuestionIndex].text }}</h2>
-        
+
         <div class="audio-container">
             <!-- This ng-container will only handle the sample buttons -->
             <ng-container *ngFor="let sample of questions[currentQuestionIndex]?.preview; let i = index">
-                <button class="sample-button" (click)="toggleAccordion(i)">Sample {{i+1}}</button>
+                <button class="sample-button" [ngClass]="{'active': i === activeSampleIndex}"
+                    (click)="toggleAccordion(i)">
+                    Sample {{i+1}}
+                </button>
+
             </ng-container>
         </div>
-        
+
         <!-- Separate container for audio players -->
         <div class="audio-players-container">
             <ng-container *ngFor="let sample of questions[currentQuestionIndex]?.preview; let i = index">
@@ -37,14 +41,17 @@
                 </div>
             </ng-container>
         </div>
-        
+
 
         <div *ngFor="let option of questions[currentQuestionIndex].options" class="option">
             <img [src]="option.img" alt="picture of artist">
-            <button (click)="selectAnswer(option.name)"> {{ option.name }}</button>
+            <button (click)="selectAnswer(option.name)" [ngClass]="{'active': option.name === selectedAnswer}"
+                class="select-artist-button">
+                {{ option.name }}
+            </button>
+
         </div>
 
-        <p>Selected answer: {{ selectedAnswer }}</p>
 
         <div *ngIf="isAnswerSubmitted">
             <span *ngIf="isAnswerCorrect" class="correct-feedback">Correct!</span>
