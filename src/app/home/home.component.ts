@@ -149,7 +149,7 @@ export class HomeComponent implements OnInit {
         const artist = {
           name: item.track.artists[0].name,
           id: item.track.artists[0].id,
-          img: item.track.album.artists[0].ima || null,
+          img: item.track.album.artists[0].img || null,
         };
 
         if (!artistIds.has(artist.id)) {
