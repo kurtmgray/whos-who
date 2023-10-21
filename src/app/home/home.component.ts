@@ -19,14 +19,13 @@ type Artist = {
   img: string
 }
 
-interface ArtistData extends Option {
-  topTracks: string[],
-  preview: string[];
-}
-
 interface Option {
   name: string;
   img: string;
+}
+
+interface ArtistData extends Option {
+  previews: string[];
 }
 
 type Question = {
@@ -111,8 +110,6 @@ export class HomeComponent implements OnInit {
     this.configLoading = true;
     this.selectedGenre = selectedGenre;
     this.errorMessage = null;
-    // const playlistIds = await this.fetchPlaylistsByGenre()
-    // this.genreArtists = await this.fetchArtistsFromPlaylist(playlistIds)
     this.configLoading = false;
   }
 
@@ -149,7 +146,7 @@ export class HomeComponent implements OnInit {
         const artist = {
           name: item.track.artists[0].name,
           id: item.track.artists[0].id,
-          img: item.track.album.artists[0].img || null,
+          img: item.track.album.images[0].url || null,
         };
 
         if (!artistIds.has(artist.id)) {
@@ -169,14 +166,18 @@ export class HomeComponent implements OnInit {
         fields: "images",
       },
     });
-    return response.images[0].url;
+
+    if (response.images.length > 0) {
+      return response.images[0].url;
+    }
+    
   }
 
   fetchTracksFromArtists = async () => {
     const artistTracks: ArtistData[] = []
     
-    const allResponses = await Promise.all(this.genreArtists.map(artist =>
-      fetchFromSpotify({
+    for (let artist of this.genreArtists) {
+      const response = await fetchFromSpotify({
         token: this.token,
         endpoint: `artists/${artist.id}/top-tracks`,
         params: {
@@ -184,24 +185,18 @@ export class HomeComponent implements OnInit {
           market: 'US',
         },
       })
-    ));
     
-    for (let response of allResponses) {
-      const topTracks: string[] = []
-      const preview: string[] = []
-      for (let track of response.tracks) {
-        if (track.id && track.preview_url) {
-          topTracks.push(track.id)
-          preview.push(track.preview_url)
-        }
-      }
-      if (preview.length >= this.numOfSongsPerQuestion) {
+      const previews = response.tracks
+        .filter((track: any) => track.preview_url)
+        .map((track: any) => track.preview_url)
+        .slice(0, this.numOfSongsPerQuestion)
+      
+      if (previews.length >= this.numOfSongsPerQuestion) {
         // Set fallback image is album cover
         const artistData = {
           name: response.tracks[0].artists[0].name,
           img: response.tracks[0].album.images[0].url || null,
-          topTracks,
-          preview
+          previews
         };
         artistTracks.push(artistData);
       }
@@ -216,8 +211,11 @@ export class HomeComponent implements OnInit {
   createQuestions = async () => {
     this.configLoading = true;
     const playlistIds = await this.fetchPlaylistsByGenre()
+    console.log(`Playlist IDs from ${this.selectedGenre}: `, playlistIds)
     this.genreArtists = await this.fetchArtistsFromPlaylist(playlistIds)
+    console.log(`Artists from playlists: `, this.genreArtists)
     const artistTracks = await this.fetchTracksFromArtists()
+    console.log(`Correct artist tracks: `, artistTracks)
     const usedArtist = new Set<string>();
     const questions: Question[] = [];
     
@@ -242,7 +240,8 @@ export class HomeComponent implements OnInit {
       const options: Option[] = [
           { 
             name: correctArtist.name, 
-            img: correctArtist.img 
+            img: correctArtist.img,
+
           },
           ...wrongArtists.map((artist, index) => {
               return { name: artist.name, img: wrongArtistImages[index] };
@@ -253,7 +252,7 @@ export class HomeComponent implements OnInit {
           text: `Who is the artist of this track?`,
           options,
           correctAnswer: correctArtist.name,
-          preview: correctArtist.preview.slice(0, this.numOfSongsPerQuestion)
+          preview: correctArtist.previews.slice(0, this.numOfSongsPerQuestion)
       });
 
       wrongArtists.forEach(artist => usedArtist.add(artist.id));
@@ -266,7 +265,7 @@ export class HomeComponent implements OnInit {
       this.errorMessage = "Not enough songs to create questions. Please select a different genre."
       return
     }
-
+    console.log("Questions to send to Game: ", questions);
     this.router.navigate(['/game'], navigationExtras);
     this.configLoading = false;
   }
