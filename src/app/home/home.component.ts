@@ -147,6 +147,7 @@ export class HomeComponent implements OnInit {
           name: item.track.artists[0].name,
           id: item.track.artists[0].id,
           img: item.track.album.images[0].url || null,
+
         };
 
         if (!artistIds.has(artist.id)) {
@@ -208,6 +209,12 @@ export class HomeComponent implements OnInit {
     return artistTracks
   }
 
+  // createQuestions = async () => {
+  //   this.configLoading = true;
+  //   const artistTracks = await this.fetchTracksFromArtists()
+  //   const usedArtist = new Set<string>();
+  //   const questions: Question[] = [];
+    
   createQuestions = async () => {
     this.configLoading = true;
     const playlistIds = await this.fetchPlaylistsByGenre()
@@ -218,7 +225,6 @@ export class HomeComponent implements OnInit {
     console.log(`Correct artist tracks: `, artistTracks)
     const usedArtist = new Set<string>();
     const questions: Question[] = [];
-    
     for (let artistData of artistTracks) {
       const correctArtistId = this.genreArtists.find(artist => artist.name === artistData.name)?.id;
       const correctArtist = correctArtistId 
