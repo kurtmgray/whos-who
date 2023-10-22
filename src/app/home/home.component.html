@@ -12,7 +12,7 @@
     </select>
     <br />
     Number of Questions:
-    <select [(ngModel)]="numOfQuestions" (ngModelChange)="setNumOfQuestions($event)">
+    <select [(ngModel)]="numOfQuestions">
       <option value="1">1</option>
       <option value="2">2</option>
       <option value="3">3</option>
@@ -26,14 +26,14 @@
     </select>
     <br />
     Number of Songs per Question:
-    <select [(ngModel)]="numOfSongsPerQuestion" (ngModelChange)="setNumOfSongsPerQuestion($event)">
+    <select [(ngModel)]="numOfSongsPerQuestion">
       <option value="1">1</option>
       <option value="2">2</option>
       <option value="3">3</option>
     </select>
     <br />
     Number of Options per Question:
-    <select [(ngModel)]="numOfOptionsPerQuestion" (ngModelChange)="setNumOfOptionsPerQuestion($event)">
+    <select [(ngModel)]="numOfOptionsPerQuestion">
       <option value="2">2</option>
       <option value="3">3</option>
       <option value="4">4</option>
