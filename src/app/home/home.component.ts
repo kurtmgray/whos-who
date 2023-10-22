@@ -1,39 +1,14 @@
 import { Component, OnInit, Output } from "@angular/core";
-import fetchFromSpotify, { request } from "../../services/api";
+import { request } from "../../services/api";
 import { environment } from "src/environments/environment";
 import { Router, NavigationExtras } from "@angular/router";
+import { ConfigService } from "src/services/config.service";
+import { GameService } from "src/services/game.service";
 
 const AUTH_ENDPOINT = "https://accounts.spotify.com/api/token";
 const TOKEN_KEY = "whos-who-access-token";
 const CLIENT_ID = environment['SPOTIFY_CLIENT_ID'];
 const CLIENT_SECRET = environment['SPOTIFY_CLIENT_SECRET'];
-const DEFAULT_SELECTED_GENRE = null;
-const DEFAULT_NUM_OF_QUESTIONS = 5;
-const DEFAULT_NUM_OF_OPTIONS_PER_QUESTION = 2;
-const DEFAULT_NUM_OF_SONGS_PER_QUESTION = 1;
-
-
-type Artist = {
-  name: string,
-  id: string,
-  img: string
-}
-
-interface Option {
-  name: string;
-  img: string;
-}
-
-interface ArtistData extends Option {
-  previews: string[];
-}
-
-type Question = {
-  text: string;
-  options: Option[];
-  correctAnswer: string;
-  preview: string[];
-}
 
 @Component({
   selector: "app-home",
@@ -41,20 +16,24 @@ type Question = {
   styleUrls: ["./home.component.css"],
 })
 export class HomeComponent implements OnInit {
-  constructor(private router: Router) { }
+  constructor(
+    private router: Router, 
+    private configService: ConfigService, 
+    private gameService: GameService
+  ) {}
 
   @Output() questions: Question[] = [];
 
   genres: string[] = ["House", "Alternative", "J-Rock", "R&B"];
-  selectedGenre: string | null = DEFAULT_SELECTED_GENRE;
+  selectedGenre: string | null = this.configService.selectedGenre;
   authLoading: boolean = false;
   configLoading: boolean = false;
   token: string = "";
   errorMessage: string | null = null;
 
-  numOfQuestions: number = DEFAULT_NUM_OF_QUESTIONS;
-  numOfOptionsPerQuestion: number = DEFAULT_NUM_OF_OPTIONS_PER_QUESTION
-  numOfSongsPerQuestion: number = DEFAULT_NUM_OF_SONGS_PER_QUESTION;
+  numOfQuestions: number = this.configService.numOfQuestions;
+  numOfOptionsPerQuestion: number = this.configService.numOfOptionsPerQuestion
+  numOfSongsPerQuestion: number = this.configService.numOfSongsPerQuestion;
 
   genreArtists: Artist[] = [];
 
@@ -91,146 +70,62 @@ export class HomeComponent implements OnInit {
       this.token = newToken.value;
       this.loadGenres(newToken.value);
     });
-
-    
   }
+
+  loadCurrentConfigFromService() {
+    this.configService.loadSavedConfig();
+    this.selectedGenre = this.configService.selectedGenre;
+    this.numOfQuestions = this.configService.numOfQuestions;
+    this.numOfOptionsPerQuestion = this.configService.numOfOptionsPerQuestion;
+    this.numOfSongsPerQuestion = this.configService.numOfSongsPerQuestion;
+}
 
   loadGenres = async (t: string) => {
     this.configLoading = true;
-    const response = await fetchFromSpotify({
-      token: t,
-      endpoint: "recommendations/available-genre-seeds",
-    });
-    console.log(response);
-    this.genres = response.genres;
+    this.genres = await this.gameService.fetchGenres(t);
     this.configLoading = false;
   };
 
   setGenre = async (selectedGenre: string) => {
     this.configLoading = true;
     this.selectedGenre = selectedGenre;
+    this.configService.selectedGenre = selectedGenre;
     this.errorMessage = null;
     this.configLoading = false;
   }
 
-  fetchPlaylistsByGenre = async () => {
-    const response = await fetchFromSpotify({
-      token: this.token,
-      endpoint: "search",
-      params: {
-        q: this.selectedGenre,
-        type: "playlist",
-        limit: 3,
-      },
-    });
-    return response.playlists.items.map((item: { id: string }) => item.id);
+  setNumOfQuestions = (numOfQuestions: number) => {
+    this.numOfQuestions = numOfQuestions;
+    this.configService.numOfQuestions = numOfQuestions;
   }
 
-  fetchArtistsFromPlaylist = async (playlistIds: string[]) => {
-    const artists: Artist[] = [];
-    const artistIds = new Set<string>();
-    
-    const allResponses = await Promise.all(playlistIds.map(playlistId => 
-      fetchFromSpotify({
-          token: this.token,
-          endpoint: `playlists/${playlistId}`,
-          params: {
-              fields: "tracks.items.track",
-              limit: 1,
-          },
-      })
-  ));
-    for (let response of allResponses) {
-      // Prevent duplicates
-      for (const item of response.tracks.items) {
-        const artist = {
-          name: item.track.artists[0].name,
-          id: item.track.artists[0].id,
-          img: item.track.album.images[0].url || null,
-
-        };
-
-        if (!artistIds.has(artist.id)) {
-          artistIds.add(artist.id);
-          artists.push(artist);
-        }
-      }
-    }
-    return artists.sort(() => 0.5 - Math.random());
+  setNumOfSongsPerQuestion = (numOfSongsPerQuestion: number) => {
+    this.numOfSongsPerQuestion = numOfSongsPerQuestion;
+    this.configService.numOfSongsPerQuestion = numOfSongsPerQuestion;
   }
 
-  fetchArtistImage = async (artistId: string) => {
-    const response = await fetchFromSpotify({
-      token: this.token,
-      endpoint: `artists/${artistId}`,
-      params: {
-        fields: "images",
-      },
-    });
-
-    if (response.images.length > 0) {
-      return response.images[0].url;
-    }
-    
+  setNumOfOptionsPerQuestion = (numOfOptionsPerQuestion: number) => {
+    this.numOfOptionsPerQuestion = numOfOptionsPerQuestion;
+    this.configService.numOfOptionsPerQuestion = numOfOptionsPerQuestion;
   }
 
-  fetchTracksFromArtists = async () => {
-    const artistTracks: ArtistData[] = []
-    
-    for (let artist of this.genreArtists) {
-      const response = await fetchFromSpotify({
-        token: this.token,
-        endpoint: `artists/${artist.id}/top-tracks`,
-        params: {
-          limit: 3,
-          market: 'US',
-        },
-      })
-    
-      const previews = response.tracks
-        .filter((track: any) => track.preview_url)
-        .map((track: any) => track.preview_url)
-        .slice(0, this.numOfSongsPerQuestion)
-      
-      if (previews.length >= this.numOfSongsPerQuestion) {
-        // Set fallback image is album cover
-        const artistData = {
-          name: response.tracks[0].artists[0].name,
-          img: response.tracks[0].album.images[0].url || null,
-          previews
-        };
-        artistTracks.push(artistData);
-      }
-      if (artistTracks.length >= this.numOfQuestions) {
-        break;
-      }
-    }
-
-    return artistTracks
-  }
-
-  // createQuestions = async () => {
-  //   this.configLoading = true;
-  //   const artistTracks = await this.fetchTracksFromArtists()
-  //   const usedArtist = new Set<string>();
-  //   const questions: Question[] = [];
-    
   createQuestions = async () => {
     this.configLoading = true;
-    const playlistIds = await this.fetchPlaylistsByGenre()
+    const playlistIds = await this.gameService.fetchPlaylistsByGenre(this.token, this.selectedGenre!)
     console.log(`Playlist IDs from ${this.selectedGenre}: `, playlistIds)
-    this.genreArtists = await this.fetchArtistsFromPlaylist(playlistIds)
+    this.genreArtists = await this.gameService.fetchArtistsFromPlaylist(this.token, playlistIds)
     console.log(`Artists from playlists: `, this.genreArtists)
-    const artistTracks = await this.fetchTracksFromArtists()
+    const artistTracks = await this.gameService.fetchTracksFromArtists(this.token, this.genreArtists, this.numOfSongsPerQuestion, this.numOfQuestions)
     console.log(`Correct artist tracks: `, artistTracks)
     const usedArtist = new Set<string>();
     const questions: Question[] = [];
+    
     for (let artistData of artistTracks) {
       const correctArtistId = this.genreArtists.find(artist => artist.name === artistData.name)?.id;
       const correctArtist = correctArtistId 
         ? { 
           ...artistData, 
-          img: await this.fetchArtistImage(correctArtistId) || artistData.img
+          img: await this.gameService.fetchArtistImage(this.token, correctArtistId) || artistData.img
         }
         : artistData;
 
@@ -239,7 +134,7 @@ export class HomeComponent implements OnInit {
           .sort(() => 0.5 - Math.random())
           .slice(0, this.numOfOptionsPerQuestion - 1);
 
-      const wrongArtistImagesPromises = wrongArtists.map(artist => this.fetchArtistImage(artist.id));
+      const wrongArtistImagesPromises = wrongArtists.map(artist => this.gameService.fetchArtistImage(this.token, artist.id));
 
       const wrongArtistImages = await Promise.all(wrongArtistImagesPromises);
 
@@ -276,33 +171,20 @@ export class HomeComponent implements OnInit {
     this.configLoading = false;
   }
 
-  saveConfigToLocalStorage = () => {
-    const config = {
-      selectedGenre: this.selectedGenre,
-      numOfQuestions: this.numOfQuestions,
-      numOfOptionsPerQuestion: this.numOfOptionsPerQuestion,
-      numOfSongsPerQuestion: this.numOfSongsPerQuestion,
-    };
-    localStorage.setItem("config", JSON.stringify(config));
-    console.log("Config saved to local storage");
+  resetToDefaultConfig = () => {
+    this.configService.resetToDefaultConfig();
+    this.loadCurrentConfigFromService();
+
   }
 
-  resetToDefaultConfig = () => {
-    this.selectedGenre = DEFAULT_SELECTED_GENRE;
-    this.numOfQuestions = DEFAULT_NUM_OF_QUESTIONS;
-    this.numOfOptionsPerQuestion = DEFAULT_NUM_OF_OPTIONS_PER_QUESTION;
-    this.numOfSongsPerQuestion = DEFAULT_NUM_OF_SONGS_PER_QUESTION;
+  saveConfigToLocalStorage = () => {
+    this.configService.saveConfigToLocalStorage();
+    this.loadCurrentConfigFromService()
   }
 
   loadSavedConfig = () => {
-    const storedConfig = localStorage.getItem("config");
-    if (storedConfig) {
-      console.log("Config found in localstorage");
-      const config = JSON.parse(storedConfig);
-      this.selectedGenre = config.selectedGenre;
-      this.numOfQuestions = config.numOfQuestions;
-      this.numOfOptionsPerQuestion = config.numOfOptionsPerQuestion;
-      this.numOfSongsPerQuestion = config.numOfSongsPerQuestion;
-    }
+    this.configService.loadSavedConfig();
+    this.loadCurrentConfigFromService()
   }
 }
+
