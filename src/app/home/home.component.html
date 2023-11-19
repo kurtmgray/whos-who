@@ -4,7 +4,7 @@
   <div *ngIf="!authLoading" class="settings">
     <h1>Settings</h1>
     Genre:
-    <select [(ngModel)]="selectedGenre" (ngModelChange)="setGenre($event)">
+    <select class="select" [(ngModel)]="selectedGenre" (ngModelChange)="setGenre($event)">
       <option [value]="null" disabled>select a genre</option>
       <option [value]="genre" *ngFor="let genre of genres">
         {{ genre | titlecase }}
